@@ -21,7 +21,9 @@ interface CourseInformationCreateProps {
   onDataChange: (data: CourseInformation) => void;
 }
 
-const CourseInformationCreate: React.FC<CourseInformationCreateProps> = ({ onDataChange }) => {
+const CourseInformationCreate: React.FC<CourseInformationCreateProps> = ({
+  onDataChange,
+}) => {
   const [academicranks, setAcademicRanks] = useState<AcademicRank[]>([]);
   const [terms, setTerms] = useState<Term[]>([]);
   const [years, setYears] = useState<Year[]>([]);
@@ -41,13 +43,12 @@ const CourseInformationCreate: React.FC<CourseInformationCreateProps> = ({ onDat
       try {
         const academicranksData = await GetAllAcademicRanks();
         setAcademicRanks(academicranksData);
-  
+
         const termsData = await GetAllTerms();
         setTerms(termsData);
-  
+
         const yearsData = await GetAllYears();
         setYears(yearsData);
-  
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -55,12 +56,12 @@ const CourseInformationCreate: React.FC<CourseInformationCreateProps> = ({ onDat
 
     fetchData();
   }, []);
-  
+
   useEffect(() => {
     const storedId = localStorage.getItem("CourseTypeID");
     const storedCourseID = localStorage.getItem("CourseID");
     const storedCourseName = localStorage.getItem("CourseName");
-    console.log(storedId, storedCourseID, storedCourseName)
+    console.log(storedId, storedCourseID, storedCourseName);
     if (storedId) setID(storedId);
 
     if (storedCourseID) {
@@ -72,24 +73,32 @@ const CourseInformationCreate: React.FC<CourseInformationCreateProps> = ({ onDat
       // เอาเครื่องหมายคำพูดออก
       const storedCourseName2 = storedCourseName.replace(/"/g, "");
       setCourseName(storedCourseName2);
-  }
-  }, [])
+    }
+  }, []);
 
   useEffect(() => {
     const data: CourseInformation = {
-      StudentEnrolled:	parseInt(students) || 0,
-      TermID:				parseInt(selectedTerm) || 0,
-      YearID:				parseInt(selectedYear) || 0,
-      CourseTypeID:		parseInt(ID) || 0,
+      StudentEnrolled: parseInt(students) || 0,
+      TermID: parseInt(selectedTerm) || 0,
+      YearID: parseInt(selectedYear) || 0,
+      CourseTypeID: parseInt(ID) || 0,
       // CourseID:			courseID,
       // CourseName:			courseName,
-      TeacherFirstname:			firstName,
-      TeacherLastname:			lastName,
-	    AcademicRankID:		parseInt(selectedAcademicRank) || 0,
-  };
-  onDataChange(data);
-  console.log(data)
-}, [students, selectedTerm, selectedYear, selectedAcademicRank,  firstName, lastName, ID])
+      TeacherFirstname: firstName,
+      TeacherLastname: lastName,
+      AcademicRankID: parseInt(selectedAcademicRank) || 0,
+    };
+    onDataChange(data);
+    console.log(data);
+  }, [
+    students,
+    selectedTerm,
+    selectedYear,
+    selectedAcademicRank,
+    firstName,
+    lastName,
+    ID,
+  ]);
 
   return (
     <div className="w-full">
@@ -141,7 +150,8 @@ const CourseInformationCreate: React.FC<CourseInformationCreateProps> = ({ onDat
                       ภาคการศึกษา
                     </Label>
                     <Select
-                      onValueChange={(value) => setSelectedTerm(value)} value={selectedTerm}
+                      onValueChange={(value) => setSelectedTerm(value)}
+                      value={selectedTerm}
                     >
                       <SelectTrigger id="term" className="w-72 bg-white">
                         <SelectValue placeholder="เลือกภาคการศึกษา" />
@@ -161,7 +171,8 @@ const CourseInformationCreate: React.FC<CourseInformationCreateProps> = ({ onDat
                       ปีการศึกษา
                     </Label>
                     <Select
-                      onValueChange={(value) => setSelectedYear(value)} value={selectedYear}
+                      onValueChange={(value) => setSelectedYear(value)}
+                      value={selectedYear}
                     >
                       <SelectTrigger id="year" className="w-72 bg-white">
                         <SelectValue placeholder="เลือกปีการศึกษา" />
@@ -184,34 +195,53 @@ const CourseInformationCreate: React.FC<CourseInformationCreateProps> = ({ onDat
                     <Label htmlFor="teacher" className="text-left font-normal">
                       อาจารย์ผู้สอน
                     </Label>
+
                     <Select
-                      onValueChange={(value) => setSelectedAcademicRank(value)} value={selectedAcademicRank}
+                      onValueChange={(value) => setSelectedAcademicRank(value)}
+                      value={selectedAcademicRank}
                     >
-                      <SelectTrigger id="academic_ranks" className="w-72 bg-white">
+                      <SelectTrigger
+                        id="academic_ranks"
+                        className="w-72 bg-white"
+                      >
                         <SelectValue placeholder="เลือกตำแหน่งทางวิชาการ" />
                       </SelectTrigger>
                       <SelectContent>
                         {academicranks.map((academicrank) => (
-                          <SelectItem key={academicrank.ID} value={academicrank.ID?.toString()}>
+                          <SelectItem
+                            key={academicrank.ID}
+                            value={academicrank.ID?.toString()}
+                          >
                             {academicrank.AcademicRanks}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <Input
-                      id="first_name"
-                      placeholder=" "
-                      className="w-72"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                    />
-                    <Input
-                      id="last_name"
-                      placeholder=" "
-                      className="w-72"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                    />
+
+                    <div className="flex flex-col">
+                      <Label className="text-left font-normal mt-4">
+                        ชื่อ :
+                      </Label>
+                      <Input
+                        id="first_name"
+                        placeholder=" "
+                        className="w-72 mt-2"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <Label className="text-left font-normal mt-4">
+                        นามสกุล :
+                      </Label>
+                      <Input
+                        id="last_name"
+                        placeholder=" "
+                        className="w-72 mt-2"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                      />
+                    </div>
                   </div>
                   {/* ฟิลด์ Student Enrolled */}
                   <div className="flex flex-col space-y-2">
