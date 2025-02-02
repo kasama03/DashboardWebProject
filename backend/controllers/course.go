@@ -104,8 +104,8 @@ func UpdateCourseAll(c *gin.Context) {
 		Course              entity.Course
 		Grade               entity.Grade
 		Score               entity.Score
-		Clo                 []entity.Clo             // Clo เป็น array สำหรับหลายรายการ
-		CourseInformation   entity.CourseInformation // ใช้ CourseInformation จาก entity แทน
+		Clo                 []entity.Clo
+		CourseInformation   entity.CourseInformation
 		CourseInformationID int
 		GradeID             int
 		ScoreID             int
@@ -124,46 +124,44 @@ func UpdateCourseAll(c *gin.Context) {
 
 	println("print", reqBody.Course.CourseInformationID)
 
-	// เริ่มต้นการทำงานใน transaction เพื่อให้การอัปเดตทั้งสองตารางพร้อมกัน
+	// เริ่ม transaction
 	tx := entity.DB().Begin()
 
-	// ค้นหา CourseInformation ที่ต้องการอัปเดต
+	// ค้นหาและอัปเดต CourseInformation
 	var courseInfo entity.CourseInformation
 	if err := tx.First(&courseInfo, reqBody.Course.CourseInformationID).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "CourseInformation ไม่พบ"})
 		return
 	}
-
-	// อัปเดต CourseInformation
 	if err := tx.Model(&courseInfo).Updates(reqBody.CourseInformation).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	println("courseinformation pass")
-	// อัปเดต Grade
+
+	// ค้นหาและอัปเดต Grade
 	var grade entity.Grade
 	if err := tx.First(&grade, reqBody.Course.GradeID).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Grade ไม่พบ"})
 		return
 	}
-
 	if err := tx.Model(&grade).Updates(reqBody.Grade).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 	println("grade pass")
-	// อัปเดต Score
+
+	// ค้นหาและอัปเดต Score
 	var score entity.Score
 	if err := tx.First(&score, reqBody.Course.ScoreID).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Score ไม่พบ"})
 		return
 	}
-
 	if err := tx.Model(&score).Updates(reqBody.Score).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -171,8 +169,8 @@ func UpdateCourseAll(c *gin.Context) {
 	}
 	println("score pass")
 
+	// อัปเดต Clo
 	if len(reqBody.Clo) > 0 {
-		// ตรวจสอบว่า Clo มี ID ที่ถูกต้อง
 		for _, clo := range reqBody.Clo {
 			if clo.ID == 0 {
 				tx.Rollback()
@@ -181,35 +179,41 @@ func UpdateCourseAll(c *gin.Context) {
 			}
 		}
 		println("clo lv1 pass")
-		// ลบความสัมพันธ์เก่า
-		if err := tx.Model(&reqBody.Course).Association("Clo").Clear(); err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
 
-		// เพิ่ม Clo ใหม่
-		if err := tx.Model(&reqBody.Course).Association("Clo").Append(reqBody.Clo); err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
+		// ตรวจสอบและอัปเดตหรือสร้าง Clo
+		for _, clo := range reqBody.Clo {
+			var existingClo entity.Clo
+			if err := tx.First(&existingClo, clo.ID).Error; err != nil {
+				// ถ้า Clo ยังไม่มีอยู่ในฐานข้อมูล ให้สร้างใหม่
+				if err := tx.Create(&clo).Error; err != nil {
+					tx.Rollback()
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+					return
+				}
+			} else {
+				// ถ้ามีอยู่แล้วให้ทำการอัปเดต
+				if err := tx.Model(&existingClo).Updates(clo).Error; err != nil {
+					tx.Rollback()
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+					return
+				}
+			}
 		}
 	}
 	println("clo pass")
 
-	// ตั้งค่า foreign keys ให้กับ Course
+	// อัปเดต Course
 	reqBody.Course.GradeID = reqBody.Grade.ID
 	reqBody.Course.ScoreID = reqBody.Score.ID
 	reqBody.Course.CourseInformationID = reqBody.CourseInformation.ID
 
-	// อัปเดต Course
 	if err := tx.Model(&reqBody.Course).Updates(reqBody.Course).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Commit การทำงานทั้งหมดใน transaction
+	// Commit transaction
 	tx.Commit()
 
 	c.JSON(http.StatusOK, gin.H{"data": "Course, Grade, Score, CourseInformation, and Clo updated successfully"})
