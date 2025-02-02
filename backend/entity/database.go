@@ -164,6 +164,12 @@ func seedData() {
 		{PloNo: 4},
 		{PloNo: 5},
 		{PloNo: 6},
+		{PloNo: 7},
+		{PloNo: 8},
+		{PloNo: 9},
+		{PloNo: 10},
+		{PloNo: 11},
+		{PloNo: 12},
 	}
 	
 	for _, plo := range plos {
@@ -177,6 +183,12 @@ func seedData() {
 		{PiNo: 4},
 		{PiNo: 5},
 		{PiNo: 6},
+		{PiNo: 7},
+		{PiNo: 8},
+		{PiNo: 9},
+		{PiNo: 10},
+		{PiNo: 11},
+		{PiNo: 12},
 	}
 	
 	for _, pi := range pis {
