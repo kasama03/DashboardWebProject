@@ -7,4 +7,4 @@ Run Backend
 
 ## Frontend
 Run Frontend
-- npm run.dev
+- npm run dev
